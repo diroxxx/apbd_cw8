@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices.JavaScript;
+﻿using System.Collections;
+using System.Runtime.InteropServices.JavaScript;
 using Exercise6.Models;
 
 namespace Exercise6
@@ -312,10 +313,10 @@ namespace Exercise6
         public static IEnumerable<object> Task11()
         {
             IEnumerable<object> result = Emps.Join(Depts, emp => emp.Deptno, dept => dept.Deptno, (emp, dept) => new
-            {
-                name = dept.Dname,
+                {
+                    name = dept.Dname,
                 
-            }).GroupBy(e=>e.name)
+                }).GroupBy(e=>e.name)
                 .Select(i => new
                 {
                     name =i.Key,
@@ -331,9 +332,13 @@ namespace Exercise6
         /// Metoda powinna zwrócić tylko tych pracowników, którzy mają min. 1 bezpośredniego podwładnego.
         /// Pracownicy powinny w ramach kolekcji być posortowani po nazwisku (rosnąco) i pensji (malejąco).
         /// </summary>
+        
+        
+        
         public static IEnumerable<Emp> Task12()
+
         {
-            IEnumerable<Emp> result = null;
+            IEnumerable<Emp> result = Emps.TaskCustomMethod();
             return result;
         }
 
@@ -346,7 +351,13 @@ namespace Exercise6
         /// </summary>
         public static int Task13(int[] arr)
         {
-            int result = 0;
+        
+            int result = arr.GroupBy(i => i).Select(e => new
+            {
+                liczba = e.Key,
+                ilosc = e.Count()
+            }).Where(e => e.ilosc % 2 != 0).Select(e => e.liczba).FirstOrDefault();
+            
             //result=
             return result;
         }
@@ -357,7 +368,17 @@ namespace Exercise6
         /// </summary>
         public static IEnumerable<Dept> Task14()
         {
-            IEnumerable<Dept> result = null;
+            
+            var depts = Depts.GroupJoin(Emps, dept => dept.Deptno, emp => emp.Deptno, (dept, emp) => new
+                                                       {
+                                                           Dept = dept,
+                                                           ilosc = emp.Count()
+                                                       });
+            var result = depts
+                .Where(d => d.ilosc == 0 || d.ilosc == 5)
+                .OrderBy(d => d.Dept.Dname ?? string.Empty)
+                .Select(d => d.Dept);
+            
             //result =
             return result;
         }
@@ -365,6 +386,12 @@ namespace Exercise6
 
     public static class CustomExtensionMethods
     {
-        //Put your extension methods here
-    }
+        public static IEnumerable<Emp> TaskCustomMethod(this IEnumerable<Emp> emps)
+        {
+            return emps.Where(emp => emps.Any(e =>e.Mgr != null && e.Mgr.Empno == emp.Empno))
+                .OrderBy(emp => emp.Ename)
+                .ThenByDescending(emp => emp.Salary);
+        }
+        
+    }    
 }
